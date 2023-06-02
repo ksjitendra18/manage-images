@@ -16,7 +16,4 @@ import HomeFeatures from '@/components/Home/HomeFeatures.vue';
       <!-- </button> -->
     </div>
   </section>
-
-
-  <HomeFeatures />
 </template>
