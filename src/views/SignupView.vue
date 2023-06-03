@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import router from '@/router'
 import Cookies from 'js-cookie'
 import { ref } from 'vue'
 
@@ -8,11 +9,9 @@ const passwordInput = ref('')
 
 const isLoading = ref(false)
 
-console.log(import.meta.env.VITE_DB_URL)
-
 const handleSubmit = async (event: Event) => {
   event.preventDefault()
-  isLoading.value = false
+  isLoading.value = true
 
   try {
     const res = await fetch('http://localhost:9999/.netlify/functions/signup', {
@@ -32,6 +31,8 @@ const handleSubmit = async (event: Event) => {
       expires: 2,
       sameSite: 'lax'
     })
+
+    router.push('/images')
   } catch (error) {
     console.log('error while login')
     throw new Error('Error. Please try again')

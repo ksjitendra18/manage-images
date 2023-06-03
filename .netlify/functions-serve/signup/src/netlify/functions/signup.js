@@ -58,44 +58,7 @@ __export(signup_exports, {
   handler: () => handler
 });
 module.exports = __toCommonJS(signup_exports);
-
-// node_modules/nanoid/index.js
-var import_crypto = require("crypto");
-var POOL_SIZE_MULTIPLIER = 128;
-var pool;
-var poolOffset;
-var fillPool = (bytes2) => {
-  if (!pool || pool.length < bytes2) {
-    pool = Buffer.allocUnsafe(bytes2 * POOL_SIZE_MULTIPLIER);
-    (0, import_crypto.randomFillSync)(pool);
-    poolOffset = 0;
-  } else if (poolOffset + bytes2 > pool.length) {
-    (0, import_crypto.randomFillSync)(pool);
-    poolOffset = 0;
-  }
-  poolOffset += bytes2;
-};
-var random = (bytes2) => {
-  fillPool(bytes2 -= 0);
-  return pool.subarray(poolOffset - bytes2, poolOffset);
-};
-var customRandom = (alphabet, defaultSize, getRandom) => {
-  let mask = (2 << 31 - Math.clz32(alphabet.length - 1 | 1)) - 1;
-  let step = Math.ceil(1.6 * mask * defaultSize / alphabet.length);
-  return (size = defaultSize) => {
-    let id = "";
-    while (true) {
-      let bytes2 = getRandom(step);
-      let i = step;
-      while (i--) {
-        id += alphabet[bytes2[i] & mask] || "";
-        if (id.length === size)
-          return id;
-      }
-    }
-  };
-};
-var customAlphabet = (alphabet, size = 21) => customRandom(alphabet, size, random);
+var import_bcrypt = __toESM(require("bcrypt"));
 
 // node_modules/drizzle-orm/relations-3eb6fe55.mjs
 var Column = class {
@@ -239,13 +202,13 @@ function getTableName(table) {
 function mapResultRow(columns, row, joinsNotNullableMap) {
   const nullifyMap = {};
   const result = columns.reduce((result2, { path, field }, columnIndex) => {
-    let decoder2;
+    let decoder3;
     if (field instanceof Column) {
-      decoder2 = field;
+      decoder3 = field;
     } else if (field instanceof SQL) {
-      decoder2 = field.decoder;
+      decoder3 = field.decoder;
     } else {
-      decoder2 = field.sql.decoder;
+      decoder3 = field.sql.decoder;
     }
     let node = result2;
     for (const [pathChunkIndex, pathChunk] of path.entries()) {
@@ -256,7 +219,7 @@ function mapResultRow(columns, row, joinsNotNullableMap) {
         node = node[pathChunk];
       } else {
         const rawValue = row[columnIndex];
-        const value = node[pathChunk] = rawValue === null ? null : decoder2.mapFromDriverValue(rawValue);
+        const value = node[pathChunk] = rawValue === null ? null : decoder3.mapFromDriverValue(rawValue);
         if (joinsNotNullableMap && field instanceof Column && path.length === 2) {
           const objectName = path[0];
           if (!(objectName in nullifyMap)) {
@@ -550,8 +513,8 @@ var SQL = class {
     }
     return new SQL.Aliased(this, alias);
   }
-  mapWith(decoder2) {
-    this.decoder = typeof decoder2 === "function" ? { mapFromDriverValue: decoder2 } : decoder2;
+  mapWith(decoder3) {
+    this.decoder = typeof decoder3 === "function" ? { mapFromDriverValue: decoder3 } : decoder3;
     return this;
   }
   inlineParams() {
@@ -583,9 +546,9 @@ var Param = class {
   value;
   encoder;
   brand;
-  constructor(value, encoder = noopEncoder) {
+  constructor(value, encoder2 = noopEncoder) {
     this.value = value;
-    this.encoder = encoder;
+    this.encoder = encoder2;
   }
 };
 function sql(strings, ...params) {
@@ -1198,15 +1161,15 @@ function mapRelationalRow(tablesConfig, tableConfig, row, buildQueryResultSelect
     } else {
       const value = mapColumnValue(row[selectionItemIndex]);
       const field = selectionItem.field;
-      let decoder2;
+      let decoder3;
       if (field instanceof Column) {
-        decoder2 = field;
+        decoder3 = field;
       } else if (field instanceof SQL) {
-        decoder2 = field.decoder;
+        decoder3 = field.decoder;
       } else {
-        decoder2 = field.sql.decoder;
+        decoder3 = field.sql.decoder;
       }
-      result[selectionItem.tsKey] = value === null ? null : decoder2.mapFromDriverValue(value);
+      result[selectionItem.tsKey] = value === null ? null : decoder3.mapFromDriverValue(value);
     }
   }
   return result;
@@ -1214,12 +1177,12 @@ function mapRelationalRow(tablesConfig, tableConfig, row, buildQueryResultSelect
 
 // node_modules/drizzle-orm/errors-bb636d84.mjs
 var DrizzleError = class extends Error {
-  constructor(message) {
-    super(message);
+  constructor(message2) {
+    super(message2);
     this.name = "DrizzleError";
   }
-  static wrap(error, message) {
-    return error instanceof Error ? new DrizzleError(message ? `${message}: ${error.message}` : error.message) : new DrizzleError(message ?? String(error));
+  static wrap(error, message2) {
+    return error instanceof Error ? new DrizzleError(message2 ? `${message2}: ${error.message}` : error.message) : new DrizzleError(message2 ?? String(error));
   }
 };
 var TransactionRollbackError = class extends DrizzleError {
@@ -1230,8 +1193,8 @@ var TransactionRollbackError = class extends DrizzleError {
 
 // node_modules/drizzle-orm/index.mjs
 var ConsoleLogWriter = class {
-  write(message) {
-    console.log(message);
+  write(message2) {
+    console.log(message2);
   }
 };
 var DefaultLogger = class {
@@ -1256,8 +1219,911 @@ var NoopLogger = class {
   }
 };
 
-// netlify/functions/signup.ts
-var import_bcrypt = __toESM(require("bcrypt"));
+// node_modules/jose/dist/node/esm/runtime/base64url.js
+var import_buffer = require("buffer");
+
+// node_modules/jose/dist/node/esm/lib/buffer_utils.js
+var encoder = new TextEncoder();
+var decoder = new TextDecoder();
+var MAX_INT32 = 2 ** 32;
+function concat(...buffers) {
+  const size = buffers.reduce((acc, { length }) => acc + length, 0);
+  const buf = new Uint8Array(size);
+  let i = 0;
+  buffers.forEach((buffer) => {
+    buf.set(buffer, i);
+    i += buffer.length;
+  });
+  return buf;
+}
+
+// node_modules/jose/dist/node/esm/runtime/base64url.js
+var encode;
+if (import_buffer.Buffer.isEncoding("base64url")) {
+  encode = (input) => import_buffer.Buffer.from(input).toString("base64url");
+} else {
+  encode = (input) => import_buffer.Buffer.from(input).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+}
+
+// node_modules/jose/dist/node/esm/util/errors.js
+var JOSEError = class extends Error {
+  static get code() {
+    return "ERR_JOSE_GENERIC";
+  }
+  constructor(message2) {
+    var _a;
+    super(message2);
+    this.code = "ERR_JOSE_GENERIC";
+    this.name = this.constructor.name;
+    (_a = Error.captureStackTrace) === null || _a === void 0 ? void 0 : _a.call(Error, this, this.constructor);
+  }
+};
+var JOSENotSupported = class extends JOSEError {
+  constructor() {
+    super(...arguments);
+    this.code = "ERR_JOSE_NOT_SUPPORTED";
+  }
+  static get code() {
+    return "ERR_JOSE_NOT_SUPPORTED";
+  }
+};
+var JWSInvalid = class extends JOSEError {
+  constructor() {
+    super(...arguments);
+    this.code = "ERR_JWS_INVALID";
+  }
+  static get code() {
+    return "ERR_JWS_INVALID";
+  }
+};
+var JWTInvalid = class extends JOSEError {
+  constructor() {
+    super(...arguments);
+    this.code = "ERR_JWT_INVALID";
+  }
+  static get code() {
+    return "ERR_JWT_INVALID";
+  }
+};
+
+// node_modules/jose/dist/node/esm/runtime/is_key_object.js
+var import_crypto = require("crypto");
+var util = __toESM(require("util"), 1);
+var is_key_object_default = util.types.isKeyObject ? (obj) => util.types.isKeyObject(obj) : (obj) => obj != null && obj instanceof import_crypto.KeyObject;
+
+// node_modules/jose/dist/node/esm/runtime/webcrypto.js
+var crypto = __toESM(require("crypto"), 1);
+var util2 = __toESM(require("util"), 1);
+var webcrypto2 = crypto.webcrypto;
+var webcrypto_default = webcrypto2;
+var isCryptoKey = util2.types.isCryptoKey ? (key) => util2.types.isCryptoKey(key) : (key) => false;
+
+// node_modules/jose/dist/node/esm/lib/crypto_key.js
+function unusable(name2, prop = "algorithm.name") {
+  return new TypeError(`CryptoKey does not support this operation, its ${prop} must be ${name2}`);
+}
+function isAlgorithm(algorithm, name2) {
+  return algorithm.name === name2;
+}
+function getHashLength(hash) {
+  return parseInt(hash.name.slice(4), 10);
+}
+function getNamedCurve(alg) {
+  switch (alg) {
+    case "ES256":
+      return "P-256";
+    case "ES384":
+      return "P-384";
+    case "ES512":
+      return "P-521";
+    default:
+      throw new Error("unreachable");
+  }
+}
+function checkUsage(key, usages) {
+  if (usages.length && !usages.some((expected) => key.usages.includes(expected))) {
+    let msg = "CryptoKey does not support this operation, its usages must include ";
+    if (usages.length > 2) {
+      const last = usages.pop();
+      msg += `one of ${usages.join(", ")}, or ${last}.`;
+    } else if (usages.length === 2) {
+      msg += `one of ${usages[0]} or ${usages[1]}.`;
+    } else {
+      msg += `${usages[0]}.`;
+    }
+    throw new TypeError(msg);
+  }
+}
+function checkSigCryptoKey(key, alg, ...usages) {
+  switch (alg) {
+    case "HS256":
+    case "HS384":
+    case "HS512": {
+      if (!isAlgorithm(key.algorithm, "HMAC"))
+        throw unusable("HMAC");
+      const expected = parseInt(alg.slice(2), 10);
+      const actual = getHashLength(key.algorithm.hash);
+      if (actual !== expected)
+        throw unusable(`SHA-${expected}`, "algorithm.hash");
+      break;
+    }
+    case "RS256":
+    case "RS384":
+    case "RS512": {
+      if (!isAlgorithm(key.algorithm, "RSASSA-PKCS1-v1_5"))
+        throw unusable("RSASSA-PKCS1-v1_5");
+      const expected = parseInt(alg.slice(2), 10);
+      const actual = getHashLength(key.algorithm.hash);
+      if (actual !== expected)
+        throw unusable(`SHA-${expected}`, "algorithm.hash");
+      break;
+    }
+    case "PS256":
+    case "PS384":
+    case "PS512": {
+      if (!isAlgorithm(key.algorithm, "RSA-PSS"))
+        throw unusable("RSA-PSS");
+      const expected = parseInt(alg.slice(2), 10);
+      const actual = getHashLength(key.algorithm.hash);
+      if (actual !== expected)
+        throw unusable(`SHA-${expected}`, "algorithm.hash");
+      break;
+    }
+    case "EdDSA": {
+      if (key.algorithm.name !== "Ed25519" && key.algorithm.name !== "Ed448") {
+        throw unusable("Ed25519 or Ed448");
+      }
+      break;
+    }
+    case "ES256":
+    case "ES384":
+    case "ES512": {
+      if (!isAlgorithm(key.algorithm, "ECDSA"))
+        throw unusable("ECDSA");
+      const expected = getNamedCurve(alg);
+      const actual = key.algorithm.namedCurve;
+      if (actual !== expected)
+        throw unusable(expected, "algorithm.namedCurve");
+      break;
+    }
+    default:
+      throw new TypeError("CryptoKey does not support this operation");
+  }
+  checkUsage(key, usages);
+}
+
+// node_modules/jose/dist/node/esm/lib/invalid_key_input.js
+function message(msg, actual, ...types4) {
+  if (types4.length > 2) {
+    const last = types4.pop();
+    msg += `one of type ${types4.join(", ")}, or ${last}.`;
+  } else if (types4.length === 2) {
+    msg += `one of type ${types4[0]} or ${types4[1]}.`;
+  } else {
+    msg += `of type ${types4[0]}.`;
+  }
+  if (actual == null) {
+    msg += ` Received ${actual}`;
+  } else if (typeof actual === "function" && actual.name) {
+    msg += ` Received function ${actual.name}`;
+  } else if (typeof actual === "object" && actual != null) {
+    if (actual.constructor && actual.constructor.name) {
+      msg += ` Received an instance of ${actual.constructor.name}`;
+    }
+  }
+  return msg;
+}
+var invalid_key_input_default = (actual, ...types4) => {
+  return message("Key must be ", actual, ...types4);
+};
+function withAlg(alg, actual, ...types4) {
+  return message(`Key for the ${alg} algorithm must be `, actual, ...types4);
+}
+
+// node_modules/jose/dist/node/esm/runtime/is_key_like.js
+var is_key_like_default = (key) => is_key_object_default(key) || isCryptoKey(key);
+var types3 = ["KeyObject"];
+if (globalThis.CryptoKey || (webcrypto_default === null || webcrypto_default === void 0 ? void 0 : webcrypto_default.CryptoKey)) {
+  types3.push("CryptoKey");
+}
+
+// node_modules/jose/dist/node/esm/runtime/zlib.js
+var import_util = require("util");
+var import_zlib = require("zlib");
+var inflateRaw = (0, import_util.promisify)(import_zlib.inflateRaw);
+var deflateRaw = (0, import_util.promisify)(import_zlib.deflateRaw);
+
+// node_modules/jose/dist/node/esm/lib/is_disjoint.js
+var isDisjoint = (...headers) => {
+  const sources = headers.filter(Boolean);
+  if (sources.length === 0 || sources.length === 1) {
+    return true;
+  }
+  let acc;
+  for (const header of sources) {
+    const parameters = Object.keys(header);
+    if (!acc || acc.size === 0) {
+      acc = new Set(parameters);
+      continue;
+    }
+    for (const parameter of parameters) {
+      if (acc.has(parameter)) {
+        return false;
+      }
+      acc.add(parameter);
+    }
+  }
+  return true;
+};
+var is_disjoint_default = isDisjoint;
+
+// node_modules/jose/dist/node/esm/lib/is_object.js
+function isObjectLike(value) {
+  return typeof value === "object" && value !== null;
+}
+function isObject(input) {
+  if (!isObjectLike(input) || Object.prototype.toString.call(input) !== "[object Object]") {
+    return false;
+  }
+  if (Object.getPrototypeOf(input) === null) {
+    return true;
+  }
+  let proto = input;
+  while (Object.getPrototypeOf(proto) !== null) {
+    proto = Object.getPrototypeOf(proto);
+  }
+  return Object.getPrototypeOf(input) === proto;
+}
+
+// node_modules/jose/dist/node/esm/runtime/ecdhes.js
+var import_crypto3 = require("crypto");
+var import_util2 = require("util");
+
+// node_modules/jose/dist/node/esm/runtime/get_named_curve.js
+var import_buffer2 = require("buffer");
+var import_crypto2 = require("crypto");
+var p256 = import_buffer2.Buffer.from([42, 134, 72, 206, 61, 3, 1, 7]);
+var p384 = import_buffer2.Buffer.from([43, 129, 4, 0, 34]);
+var p521 = import_buffer2.Buffer.from([43, 129, 4, 0, 35]);
+var secp256k1 = import_buffer2.Buffer.from([43, 129, 4, 0, 10]);
+var weakMap = /* @__PURE__ */ new WeakMap();
+var namedCurveToJOSE = (namedCurve) => {
+  switch (namedCurve) {
+    case "prime256v1":
+      return "P-256";
+    case "secp384r1":
+      return "P-384";
+    case "secp521r1":
+      return "P-521";
+    case "secp256k1":
+      return "secp256k1";
+    default:
+      throw new JOSENotSupported("Unsupported key curve for this operation");
+  }
+};
+var getNamedCurve2 = (kee, raw) => {
+  var _a;
+  let key;
+  if (isCryptoKey(kee)) {
+    key = import_crypto2.KeyObject.from(kee);
+  } else if (is_key_object_default(kee)) {
+    key = kee;
+  } else {
+    throw new TypeError(invalid_key_input_default(kee, ...types3));
+  }
+  if (key.type === "secret") {
+    throw new TypeError('only "private" or "public" type keys can be used for this operation');
+  }
+  switch (key.asymmetricKeyType) {
+    case "ed25519":
+    case "ed448":
+      return `Ed${key.asymmetricKeyType.slice(2)}`;
+    case "x25519":
+    case "x448":
+      return `X${key.asymmetricKeyType.slice(1)}`;
+    case "ec": {
+      if (weakMap.has(key)) {
+        return weakMap.get(key);
+      }
+      let namedCurve = (_a = key.asymmetricKeyDetails) === null || _a === void 0 ? void 0 : _a.namedCurve;
+      if (!namedCurve && key.type === "private") {
+        namedCurve = getNamedCurve2((0, import_crypto2.createPublicKey)(key), true);
+      } else if (!namedCurve) {
+        const buf = key.export({ format: "der", type: "spki" });
+        const i = buf[1] < 128 ? 14 : 15;
+        const len = buf[i];
+        const curveOid = buf.slice(i + 1, i + 1 + len);
+        if (curveOid.equals(p256)) {
+          namedCurve = "prime256v1";
+        } else if (curveOid.equals(p384)) {
+          namedCurve = "secp384r1";
+        } else if (curveOid.equals(p521)) {
+          namedCurve = "secp521r1";
+        } else if (curveOid.equals(secp256k1)) {
+          namedCurve = "secp256k1";
+        } else {
+          throw new JOSENotSupported("Unsupported key curve for this operation");
+        }
+      }
+      if (raw)
+        return namedCurve;
+      const curve = namedCurveToJOSE(namedCurve);
+      weakMap.set(key, curve);
+      return curve;
+    }
+    default:
+      throw new TypeError("Invalid asymmetric key type for this operation");
+  }
+};
+var get_named_curve_default = getNamedCurve2;
+
+// node_modules/jose/dist/node/esm/runtime/ecdhes.js
+var generateKeyPair = (0, import_util2.promisify)(import_crypto3.generateKeyPair);
+
+// node_modules/jose/dist/node/esm/runtime/pbes2kw.js
+var import_util3 = require("util");
+var import_crypto4 = require("crypto");
+var pbkdf2 = (0, import_util3.promisify)(import_crypto4.pbkdf2);
+
+// node_modules/jose/dist/node/esm/runtime/check_modulus_length.js
+var weakMap2 = /* @__PURE__ */ new WeakMap();
+var getLength = (buf, index) => {
+  let len = buf.readUInt8(1);
+  if ((len & 128) === 0) {
+    if (index === 0) {
+      return len;
+    }
+    return getLength(buf.subarray(2 + len), index - 1);
+  }
+  const num = len & 127;
+  len = 0;
+  for (let i = 0; i < num; i++) {
+    len <<= 8;
+    const j = buf.readUInt8(2 + i);
+    len |= j;
+  }
+  if (index === 0) {
+    return len;
+  }
+  return getLength(buf.subarray(2 + len), index - 1);
+};
+var getLengthOfSeqIndex = (sequence, index) => {
+  const len = sequence.readUInt8(1);
+  if ((len & 128) === 0) {
+    return getLength(sequence.subarray(2), index);
+  }
+  const num = len & 127;
+  return getLength(sequence.subarray(2 + num), index);
+};
+var getModulusLength = (key) => {
+  var _a, _b;
+  if (weakMap2.has(key)) {
+    return weakMap2.get(key);
+  }
+  const modulusLength = (_b = (_a = key.asymmetricKeyDetails) === null || _a === void 0 ? void 0 : _a.modulusLength) !== null && _b !== void 0 ? _b : getLengthOfSeqIndex(key.export({ format: "der", type: "pkcs1" }), key.type === "private" ? 1 : 0) - 1 << 3;
+  weakMap2.set(key, modulusLength);
+  return modulusLength;
+};
+var check_modulus_length_default = (key, alg) => {
+  if (getModulusLength(key) < 2048) {
+    throw new TypeError(`${alg} requires key modulusLength to be 2048 bits or larger`);
+  }
+};
+
+// node_modules/jose/dist/node/esm/runtime/asn1_sequence_encoder.js
+var import_buffer3 = require("buffer");
+var tagInteger = 2;
+var tagBitStr = 3;
+var tagOctStr = 4;
+var tagSequence = 48;
+var bZero = import_buffer3.Buffer.from([0]);
+var bTagInteger = import_buffer3.Buffer.from([tagInteger]);
+var bTagBitStr = import_buffer3.Buffer.from([tagBitStr]);
+var bTagSequence = import_buffer3.Buffer.from([tagSequence]);
+var bTagOctStr = import_buffer3.Buffer.from([tagOctStr]);
+var oids = /* @__PURE__ */ new Map([
+  ["P-256", import_buffer3.Buffer.from("06 08 2A 86 48 CE 3D 03 01 07".replace(/ /g, ""), "hex")],
+  ["secp256k1", import_buffer3.Buffer.from("06 05 2B 81 04 00 0A".replace(/ /g, ""), "hex")],
+  ["P-384", import_buffer3.Buffer.from("06 05 2B 81 04 00 22".replace(/ /g, ""), "hex")],
+  ["P-521", import_buffer3.Buffer.from("06 05 2B 81 04 00 23".replace(/ /g, ""), "hex")],
+  ["ecPublicKey", import_buffer3.Buffer.from("06 07 2A 86 48 CE 3D 02 01".replace(/ /g, ""), "hex")],
+  ["X25519", import_buffer3.Buffer.from("06 03 2B 65 6E".replace(/ /g, ""), "hex")],
+  ["X448", import_buffer3.Buffer.from("06 03 2B 65 6F".replace(/ /g, ""), "hex")],
+  ["Ed25519", import_buffer3.Buffer.from("06 03 2B 65 70".replace(/ /g, ""), "hex")],
+  ["Ed448", import_buffer3.Buffer.from("06 03 2B 65 71".replace(/ /g, ""), "hex")]
+]);
+
+// node_modules/jose/dist/node/esm/runtime/flags.js
+var [major, minor] = process.versions.node.split(".").map((str) => parseInt(str, 10));
+var oneShotCallback = major >= 16 || major === 15 && minor >= 13;
+var rsaPssParams = !("electron" in process.versions) && (major >= 17 || major === 16 && minor >= 9);
+var jwkExport = major >= 16 || major === 15 && minor >= 9;
+var jwkImport = major >= 16 || major === 15 && minor >= 12;
+
+// node_modules/jose/dist/node/esm/lib/check_key_type.js
+var symmetricTypeCheck = (alg, key) => {
+  if (key instanceof Uint8Array)
+    return;
+  if (!is_key_like_default(key)) {
+    throw new TypeError(withAlg(alg, key, ...types3, "Uint8Array"));
+  }
+  if (key.type !== "secret") {
+    throw new TypeError(`${types3.join(" or ")} instances for symmetric algorithms must be of type "secret"`);
+  }
+};
+var asymmetricTypeCheck = (alg, key, usage) => {
+  if (!is_key_like_default(key)) {
+    throw new TypeError(withAlg(alg, key, ...types3));
+  }
+  if (key.type === "secret") {
+    throw new TypeError(`${types3.join(" or ")} instances for asymmetric algorithms must not be of type "secret"`);
+  }
+  if (usage === "sign" && key.type === "public") {
+    throw new TypeError(`${types3.join(" or ")} instances for asymmetric algorithm signing must be of type "private"`);
+  }
+  if (usage === "decrypt" && key.type === "public") {
+    throw new TypeError(`${types3.join(" or ")} instances for asymmetric algorithm decryption must be of type "private"`);
+  }
+  if (key.algorithm && usage === "verify" && key.type === "private") {
+    throw new TypeError(`${types3.join(" or ")} instances for asymmetric algorithm verifying must be of type "public"`);
+  }
+  if (key.algorithm && usage === "encrypt" && key.type === "private") {
+    throw new TypeError(`${types3.join(" or ")} instances for asymmetric algorithm encryption must be of type "public"`);
+  }
+};
+var checkKeyType = (alg, key, usage) => {
+  const symmetric = alg.startsWith("HS") || alg === "dir" || alg.startsWith("PBES2") || /^A\d{3}(?:GCM)?KW$/.test(alg);
+  if (symmetric) {
+    symmetricTypeCheck(alg, key);
+  } else {
+    asymmetricTypeCheck(alg, key, usage);
+  }
+};
+var check_key_type_default = checkKeyType;
+
+// node_modules/jose/dist/node/esm/lib/validate_crit.js
+function validateCrit(Err, recognizedDefault, recognizedOption, protectedHeader, joseHeader) {
+  if (joseHeader.crit !== void 0 && protectedHeader.crit === void 0) {
+    throw new Err('"crit" (Critical) Header Parameter MUST be integrity protected');
+  }
+  if (!protectedHeader || protectedHeader.crit === void 0) {
+    return /* @__PURE__ */ new Set();
+  }
+  if (!Array.isArray(protectedHeader.crit) || protectedHeader.crit.length === 0 || protectedHeader.crit.some((input) => typeof input !== "string" || input.length === 0)) {
+    throw new Err('"crit" (Critical) Header Parameter MUST be an array of non-empty strings when present');
+  }
+  let recognized;
+  if (recognizedOption !== void 0) {
+    recognized = new Map([...Object.entries(recognizedOption), ...recognizedDefault.entries()]);
+  } else {
+    recognized = recognizedDefault;
+  }
+  for (const parameter of protectedHeader.crit) {
+    if (!recognized.has(parameter)) {
+      throw new JOSENotSupported(`Extension Header Parameter "${parameter}" is not recognized`);
+    }
+    if (joseHeader[parameter] === void 0) {
+      throw new Err(`Extension Header Parameter "${parameter}" is missing`);
+    } else if (recognized.get(parameter) && protectedHeader[parameter] === void 0) {
+      throw new Err(`Extension Header Parameter "${parameter}" MUST be integrity protected`);
+    }
+  }
+  return new Set(protectedHeader.crit);
+}
+var validate_crit_default = validateCrit;
+
+// node_modules/jose/dist/node/esm/jwe/flattened/encrypt.js
+var unprotected = Symbol();
+
+// node_modules/jose/dist/node/esm/runtime/verify.js
+var crypto3 = __toESM(require("crypto"), 1);
+var import_util5 = require("util");
+
+// node_modules/jose/dist/node/esm/runtime/dsa_digest.js
+function dsaDigest(alg) {
+  switch (alg) {
+    case "PS256":
+    case "RS256":
+    case "ES256":
+    case "ES256K":
+      return "sha256";
+    case "PS384":
+    case "RS384":
+    case "ES384":
+      return "sha384";
+    case "PS512":
+    case "RS512":
+    case "ES512":
+      return "sha512";
+    case "EdDSA":
+      return void 0;
+    default:
+      throw new JOSENotSupported(`alg ${alg} is not supported either by JOSE or your javascript runtime`);
+  }
+}
+
+// node_modules/jose/dist/node/esm/runtime/node_key.js
+var import_crypto5 = require("crypto");
+var PSS = {
+  padding: import_crypto5.constants.RSA_PKCS1_PSS_PADDING,
+  saltLength: import_crypto5.constants.RSA_PSS_SALTLEN_DIGEST
+};
+var ecCurveAlgMap = /* @__PURE__ */ new Map([
+  ["ES256", "P-256"],
+  ["ES256K", "secp256k1"],
+  ["ES384", "P-384"],
+  ["ES512", "P-521"]
+]);
+function keyForCrypto(alg, key) {
+  switch (alg) {
+    case "EdDSA":
+      if (!["ed25519", "ed448"].includes(key.asymmetricKeyType)) {
+        throw new TypeError("Invalid key for this operation, its asymmetricKeyType must be ed25519 or ed448");
+      }
+      return key;
+    case "RS256":
+    case "RS384":
+    case "RS512":
+      if (key.asymmetricKeyType !== "rsa") {
+        throw new TypeError("Invalid key for this operation, its asymmetricKeyType must be rsa");
+      }
+      check_modulus_length_default(key, alg);
+      return key;
+    case (rsaPssParams && "PS256"):
+    case (rsaPssParams && "PS384"):
+    case (rsaPssParams && "PS512"):
+      if (key.asymmetricKeyType === "rsa-pss") {
+        const { hashAlgorithm, mgf1HashAlgorithm, saltLength } = key.asymmetricKeyDetails;
+        const length = parseInt(alg.slice(-3), 10);
+        if (hashAlgorithm !== void 0 && (hashAlgorithm !== `sha${length}` || mgf1HashAlgorithm !== hashAlgorithm)) {
+          throw new TypeError(`Invalid key for this operation, its RSA-PSS parameters do not meet the requirements of "alg" ${alg}`);
+        }
+        if (saltLength !== void 0 && saltLength > length >> 3) {
+          throw new TypeError(`Invalid key for this operation, its RSA-PSS parameter saltLength does not meet the requirements of "alg" ${alg}`);
+        }
+      } else if (key.asymmetricKeyType !== "rsa") {
+        throw new TypeError("Invalid key for this operation, its asymmetricKeyType must be rsa or rsa-pss");
+      }
+      check_modulus_length_default(key, alg);
+      return __spreadValues({ key }, PSS);
+    case (!rsaPssParams && "PS256"):
+    case (!rsaPssParams && "PS384"):
+    case (!rsaPssParams && "PS512"):
+      if (key.asymmetricKeyType !== "rsa") {
+        throw new TypeError("Invalid key for this operation, its asymmetricKeyType must be rsa");
+      }
+      check_modulus_length_default(key, alg);
+      return __spreadValues({ key }, PSS);
+    case "ES256":
+    case "ES256K":
+    case "ES384":
+    case "ES512": {
+      if (key.asymmetricKeyType !== "ec") {
+        throw new TypeError("Invalid key for this operation, its asymmetricKeyType must be ec");
+      }
+      const actual = get_named_curve_default(key);
+      const expected = ecCurveAlgMap.get(alg);
+      if (actual !== expected) {
+        throw new TypeError(`Invalid key curve for the algorithm, its curve must be ${expected}, got ${actual}`);
+      }
+      return { dsaEncoding: "ieee-p1363", key };
+    }
+    default:
+      throw new JOSENotSupported(`alg ${alg} is not supported either by JOSE or your javascript runtime`);
+  }
+}
+
+// node_modules/jose/dist/node/esm/runtime/sign.js
+var crypto2 = __toESM(require("crypto"), 1);
+var import_util4 = require("util");
+
+// node_modules/jose/dist/node/esm/runtime/hmac_digest.js
+function hmacDigest(alg) {
+  switch (alg) {
+    case "HS256":
+      return "sha256";
+    case "HS384":
+      return "sha384";
+    case "HS512":
+      return "sha512";
+    default:
+      throw new JOSENotSupported(`alg ${alg} is not supported either by JOSE or your javascript runtime`);
+  }
+}
+
+// node_modules/jose/dist/node/esm/runtime/get_sign_verify_key.js
+var import_crypto6 = require("crypto");
+function getSignVerifyKey(alg, key, usage) {
+  if (key instanceof Uint8Array) {
+    if (!alg.startsWith("HS")) {
+      throw new TypeError(invalid_key_input_default(key, ...types3));
+    }
+    return (0, import_crypto6.createSecretKey)(key);
+  }
+  if (key instanceof import_crypto6.KeyObject) {
+    return key;
+  }
+  if (isCryptoKey(key)) {
+    checkSigCryptoKey(key, alg, usage);
+    return import_crypto6.KeyObject.from(key);
+  }
+  throw new TypeError(invalid_key_input_default(key, ...types3, "Uint8Array"));
+}
+
+// node_modules/jose/dist/node/esm/runtime/sign.js
+var oneShotSign;
+if (crypto2.sign.length > 3) {
+  oneShotSign = (0, import_util4.promisify)(crypto2.sign);
+} else {
+  oneShotSign = crypto2.sign;
+}
+var sign2 = async (alg, key, data) => {
+  const keyObject = getSignVerifyKey(alg, key, "sign");
+  if (alg.startsWith("HS")) {
+    const hmac = crypto2.createHmac(hmacDigest(alg), keyObject);
+    hmac.update(data);
+    return hmac.digest();
+  }
+  return oneShotSign(dsaDigest(alg), data, keyForCrypto(alg, keyObject));
+};
+var sign_default = sign2;
+
+// node_modules/jose/dist/node/esm/runtime/verify.js
+var oneShotVerify;
+if (crypto3.verify.length > 4 && oneShotCallback) {
+  oneShotVerify = (0, import_util5.promisify)(crypto3.verify);
+} else {
+  oneShotVerify = crypto3.verify;
+}
+
+// node_modules/jose/dist/node/esm/lib/epoch.js
+var epoch_default = (date) => Math.floor(date.getTime() / 1e3);
+
+// node_modules/jose/dist/node/esm/lib/secs.js
+var minute = 60;
+var hour = minute * 60;
+var day = hour * 24;
+var week = day * 7;
+var year = day * 365.25;
+var REGEX = /^(\d+|\d+\.\d+) ?(seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)$/i;
+var secs_default = (str) => {
+  const matched = REGEX.exec(str);
+  if (!matched) {
+    throw new TypeError("Invalid time period format");
+  }
+  const value = parseFloat(matched[1]);
+  const unit = matched[2].toLowerCase();
+  switch (unit) {
+    case "sec":
+    case "secs":
+    case "second":
+    case "seconds":
+    case "s":
+      return Math.round(value);
+    case "minute":
+    case "minutes":
+    case "min":
+    case "mins":
+    case "m":
+      return Math.round(value * minute);
+    case "hour":
+    case "hours":
+    case "hr":
+    case "hrs":
+    case "h":
+      return Math.round(value * hour);
+    case "day":
+    case "days":
+    case "d":
+      return Math.round(value * day);
+    case "week":
+    case "weeks":
+    case "w":
+      return Math.round(value * week);
+    default:
+      return Math.round(value * year);
+  }
+};
+
+// node_modules/jose/dist/node/esm/jws/flattened/sign.js
+var FlattenedSign = class {
+  constructor(payload) {
+    if (!(payload instanceof Uint8Array)) {
+      throw new TypeError("payload must be an instance of Uint8Array");
+    }
+    this._payload = payload;
+  }
+  setProtectedHeader(protectedHeader) {
+    if (this._protectedHeader) {
+      throw new TypeError("setProtectedHeader can only be called once");
+    }
+    this._protectedHeader = protectedHeader;
+    return this;
+  }
+  setUnprotectedHeader(unprotectedHeader) {
+    if (this._unprotectedHeader) {
+      throw new TypeError("setUnprotectedHeader can only be called once");
+    }
+    this._unprotectedHeader = unprotectedHeader;
+    return this;
+  }
+  async sign(key, options) {
+    if (!this._protectedHeader && !this._unprotectedHeader) {
+      throw new JWSInvalid("either setProtectedHeader or setUnprotectedHeader must be called before #sign()");
+    }
+    if (!is_disjoint_default(this._protectedHeader, this._unprotectedHeader)) {
+      throw new JWSInvalid("JWS Protected and JWS Unprotected Header Parameter names must be disjoint");
+    }
+    const joseHeader = __spreadValues(__spreadValues({}, this._protectedHeader), this._unprotectedHeader);
+    const extensions = validate_crit_default(JWSInvalid, /* @__PURE__ */ new Map([["b64", true]]), options === null || options === void 0 ? void 0 : options.crit, this._protectedHeader, joseHeader);
+    let b64 = true;
+    if (extensions.has("b64")) {
+      b64 = this._protectedHeader.b64;
+      if (typeof b64 !== "boolean") {
+        throw new JWSInvalid('The "b64" (base64url-encode payload) Header Parameter must be a boolean');
+      }
+    }
+    const { alg } = joseHeader;
+    if (typeof alg !== "string" || !alg) {
+      throw new JWSInvalid('JWS "alg" (Algorithm) Header Parameter missing or invalid');
+    }
+    check_key_type_default(alg, key, "sign");
+    let payload = this._payload;
+    if (b64) {
+      payload = encoder.encode(encode(payload));
+    }
+    let protectedHeader;
+    if (this._protectedHeader) {
+      protectedHeader = encoder.encode(encode(JSON.stringify(this._protectedHeader)));
+    } else {
+      protectedHeader = encoder.encode("");
+    }
+    const data = concat(protectedHeader, encoder.encode("."), payload);
+    const signature = await sign_default(alg, key, data);
+    const jws = {
+      signature: encode(signature),
+      payload: ""
+    };
+    if (b64) {
+      jws.payload = decoder.decode(payload);
+    }
+    if (this._unprotectedHeader) {
+      jws.header = this._unprotectedHeader;
+    }
+    if (this._protectedHeader) {
+      jws.protected = decoder.decode(protectedHeader);
+    }
+    return jws;
+  }
+};
+
+// node_modules/jose/dist/node/esm/jws/compact/sign.js
+var CompactSign = class {
+  constructor(payload) {
+    this._flattened = new FlattenedSign(payload);
+  }
+  setProtectedHeader(protectedHeader) {
+    this._flattened.setProtectedHeader(protectedHeader);
+    return this;
+  }
+  async sign(key, options) {
+    const jws = await this._flattened.sign(key, options);
+    if (jws.payload === void 0) {
+      throw new TypeError("use the flattened module for creating JWS with b64: false");
+    }
+    return `${jws.protected}.${jws.payload}.${jws.signature}`;
+  }
+};
+
+// node_modules/jose/dist/node/esm/jwt/produce.js
+var ProduceJWT = class {
+  constructor(payload) {
+    if (!isObject(payload)) {
+      throw new TypeError("JWT Claims Set MUST be an object");
+    }
+    this._payload = payload;
+  }
+  setIssuer(issuer) {
+    this._payload = __spreadProps(__spreadValues({}, this._payload), { iss: issuer });
+    return this;
+  }
+  setSubject(subject) {
+    this._payload = __spreadProps(__spreadValues({}, this._payload), { sub: subject });
+    return this;
+  }
+  setAudience(audience) {
+    this._payload = __spreadProps(__spreadValues({}, this._payload), { aud: audience });
+    return this;
+  }
+  setJti(jwtId) {
+    this._payload = __spreadProps(__spreadValues({}, this._payload), { jti: jwtId });
+    return this;
+  }
+  setNotBefore(input) {
+    if (typeof input === "number") {
+      this._payload = __spreadProps(__spreadValues({}, this._payload), { nbf: input });
+    } else {
+      this._payload = __spreadProps(__spreadValues({}, this._payload), { nbf: epoch_default(new Date()) + secs_default(input) });
+    }
+    return this;
+  }
+  setExpirationTime(input) {
+    if (typeof input === "number") {
+      this._payload = __spreadProps(__spreadValues({}, this._payload), { exp: input });
+    } else {
+      this._payload = __spreadProps(__spreadValues({}, this._payload), { exp: epoch_default(new Date()) + secs_default(input) });
+    }
+    return this;
+  }
+  setIssuedAt(input) {
+    if (typeof input === "undefined") {
+      this._payload = __spreadProps(__spreadValues({}, this._payload), { iat: epoch_default(new Date()) });
+    } else {
+      this._payload = __spreadProps(__spreadValues({}, this._payload), { iat: input });
+    }
+    return this;
+  }
+};
+
+// node_modules/jose/dist/node/esm/jwt/sign.js
+var SignJWT = class extends ProduceJWT {
+  setProtectedHeader(protectedHeader) {
+    this._protectedHeader = protectedHeader;
+    return this;
+  }
+  async sign(key, options) {
+    var _a;
+    const sig = new CompactSign(encoder.encode(JSON.stringify(this._payload)));
+    sig.setProtectedHeader(this._protectedHeader);
+    if (Array.isArray((_a = this._protectedHeader) === null || _a === void 0 ? void 0 : _a.crit) && this._protectedHeader.crit.includes("b64") && this._protectedHeader.b64 === false) {
+      throw new JWTInvalid("JWTs MUST NOT use unencoded payload");
+    }
+    return sig.sign(key, options);
+  }
+};
+
+// node_modules/jose/dist/node/esm/runtime/generate.js
+var import_crypto7 = require("crypto");
+var import_util6 = require("util");
+var generate = (0, import_util6.promisify)(import_crypto7.generateKeyPair);
+
+// node_modules/nanoid/index.js
+var import_crypto8 = require("crypto");
+var POOL_SIZE_MULTIPLIER = 128;
+var pool;
+var poolOffset;
+var fillPool = (bytes2) => {
+  if (!pool || pool.length < bytes2) {
+    pool = Buffer.allocUnsafe(bytes2 * POOL_SIZE_MULTIPLIER);
+    (0, import_crypto8.randomFillSync)(pool);
+    poolOffset = 0;
+  } else if (poolOffset + bytes2 > pool.length) {
+    (0, import_crypto8.randomFillSync)(pool);
+    poolOffset = 0;
+  }
+  poolOffset += bytes2;
+};
+var random = (bytes2) => {
+  fillPool(bytes2 -= 0);
+  return pool.subarray(poolOffset - bytes2, poolOffset);
+};
+var customRandom = (alphabet, defaultSize, getRandom) => {
+  let mask = (2 << 31 - Math.clz32(alphabet.length - 1 | 1)) - 1;
+  let step = Math.ceil(1.6 * mask * defaultSize / alphabet.length);
+  return (size = defaultSize) => {
+    let id = "";
+    while (true) {
+      let bytes2 = getRandom(step);
+      let i = step;
+      while (i--) {
+        id += alphabet[bytes2[i] & mask] || "";
+        if (id.length === size)
+          return id;
+      }
+    }
+  };
+};
+var customAlphabet = (alphabet, size = 21) => customRandom(alphabet, size, random);
 
 // node_modules/drizzle-orm/session-2b625be5.mjs
 var InlineForeignKeys2 = Symbol("InlineForeignKeys");
@@ -2355,67 +3221,6 @@ var MySqlTransaction = class extends MySqlDatabase {
   }
 };
 
-// node_modules/drizzle-orm/mysql-core/index.mjs
-var MySqlSerialBuilder = class extends MySqlColumnBuilderWithAutoIncrement {
-  constructor(name2) {
-    super(name2);
-    this.config.hasDefault = true;
-    this.config.autoIncrement = true;
-  }
-  build(table) {
-    return new MySqlSerial(table, this.config);
-  }
-};
-var MySqlSerial = class extends MySqlColumnWithAutoIncrement {
-  getSQLType() {
-    return "serial";
-  }
-  mapFromDriverValue(value) {
-    if (typeof value === "string") {
-      return Number(value);
-    }
-    return value;
-  }
-};
-function serial(name2) {
-  return new MySqlSerialBuilder(name2);
-}
-var MySqlVarCharBuilder = class extends MySqlColumnBuilder {
-  constructor(name2, config) {
-    super(name2);
-    this.config.length = config.length;
-    this.config.enum = config.enum;
-  }
-  build(table) {
-    return new MySqlVarChar(table, this.config);
-  }
-};
-var MySqlVarChar = class extends MySqlColumn {
-  length = this.config.length;
-  enumValues = this.config.enum ?? [];
-  getSQLType() {
-    return this.length === void 0 ? `varchar` : `varchar(${this.length})`;
-  }
-};
-function varchar(name2, config) {
-  return new MySqlVarCharBuilder(name2, config);
-}
-
-// netlify/db/schema.ts
-var users = mysqlTable("users", {
-  id: serial("id").primaryKey(),
-  userId: varchar("userId", { length: 256 }),
-  userAuthId: varchar("userAuthId", { length: 256 }),
-  name: varchar("name", { length: 256 }),
-  email: varchar("email", { length: 256 }),
-  password: varchar("password", { length: 256 })
-});
-var userApiKeys = mysqlTable("userapikeys", {
-  id: serial("id").primaryKey(),
-  key: varchar("name", { length: 256 }),
-  userId: varchar("userId", { length: 256 })
-});
-
 // node_modules/drizzle-orm/planetscale-serverless/index.mjs
 var PlanetScalePreparedQuery = class extends PreparedQuery {
   client;
@@ -2597,9 +3402,9 @@ function replacement(text) {
 }
 
 // node_modules/@planetscale/database/dist/text.js
-var decoder = new TextDecoder("utf-8");
-function decode(text) {
-  return text ? decoder.decode(Uint8Array.from(bytes(text))) : "";
+var decoder2 = new TextDecoder("utf-8");
+function decode3(text) {
+  return text ? decoder2.decode(Uint8Array.from(bytes(text))) : "";
 }
 function bytes(text) {
   return text.split("").map((c) => c.charCodeAt(0));
@@ -2610,8 +3415,8 @@ var Version = "1.7.0";
 
 // node_modules/@planetscale/database/dist/index.js
 var DatabaseError = class extends Error {
-  constructor(message, status, body) {
-    super(message);
+  constructor(message2, status, body) {
+    super(message2);
     this.status = status;
     this.name = "DatabaseError";
     this.body = body;
@@ -2679,11 +3484,11 @@ var Connection = class {
     const rows = result ? parse(result, castFn, options.as || "object") : [];
     const headers = fields.map((f) => f.name);
     const typeByName = (acc, { name: name2, type }) => __spreadProps(__spreadValues({}, acc), { [name2]: type });
-    const types = fields.reduce(typeByName, {});
+    const types4 = fields.reduce(typeByName, {});
     const timingSeconds = timing ?? 0;
     return {
       headers,
-      types,
+      types: types4,
       fields,
       rows,
       rowsAffected,
@@ -2793,9 +3598,9 @@ function cast(field, value) {
     case "BINARY":
       return value;
     case "JSON":
-      return JSON.parse(decode(value));
+      return JSON.parse(decode3(value));
     default:
-      return decode(value);
+      return decode3(value);
   }
 }
 
@@ -2807,10 +3612,69 @@ var connection = connect({
 });
 var db = drizzle(connection);
 
+// node_modules/drizzle-orm/mysql-core/index.mjs
+var MySqlSerialBuilder = class extends MySqlColumnBuilderWithAutoIncrement {
+  constructor(name2) {
+    super(name2);
+    this.config.hasDefault = true;
+    this.config.autoIncrement = true;
+  }
+  build(table) {
+    return new MySqlSerial(table, this.config);
+  }
+};
+var MySqlSerial = class extends MySqlColumnWithAutoIncrement {
+  getSQLType() {
+    return "serial";
+  }
+  mapFromDriverValue(value) {
+    if (typeof value === "string") {
+      return Number(value);
+    }
+    return value;
+  }
+};
+function serial(name2) {
+  return new MySqlSerialBuilder(name2);
+}
+var MySqlVarCharBuilder = class extends MySqlColumnBuilder {
+  constructor(name2, config) {
+    super(name2);
+    this.config.length = config.length;
+    this.config.enum = config.enum;
+  }
+  build(table) {
+    return new MySqlVarChar(table, this.config);
+  }
+};
+var MySqlVarChar = class extends MySqlColumn {
+  length = this.config.length;
+  enumValues = this.config.enum ?? [];
+  getSQLType() {
+    return this.length === void 0 ? `varchar` : `varchar(${this.length})`;
+  }
+};
+function varchar(name2, config) {
+  return new MySqlVarCharBuilder(name2, config);
+}
+
+// netlify/db/schema.ts
+var users = mysqlTable("users", {
+  id: serial("id").primaryKey(),
+  userId: varchar("userId", { length: 256 }),
+  userAuthId: varchar("userAuthId", { length: 256 }),
+  name: varchar("name", { length: 256 }),
+  email: varchar("email", { length: 256 }),
+  password: varchar("password", { length: 256 })
+});
+var userApiKeys = mysqlTable("userapikeys", {
+  id: serial("id").primaryKey(),
+  key: varchar("name", { length: 256 }),
+  userId: varchar("userId", { length: 256 })
+});
+
 // netlify/functions/signup.ts
-var secret = process.env.JWT_SECRET;
-var handler = async (event, context) => {
-  console.log("hit");
+var handler = async (event) => {
   const { name: name2, email, password } = JSON.parse(event.body);
   const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 15);
   try {
@@ -2829,13 +3693,20 @@ var handler = async (event, context) => {
     const salt = await import_bcrypt.default.genSalt(10);
     const hashedPassword = await import_bcrypt.default.hash(password, salt);
     const userId = nanoid();
-    const user = await db.insert(users).values({
+    const userAuthId = nanoid();
+    await db.insert(users).values({
       name: name2,
       email,
       password: hashedPassword,
-      userAuthId: nanoid(),
+      userAuthId,
       userId
     });
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+    const alg = "HS256";
+    const jwt = await new SignJWT({
+      uid: userId,
+      uauth: userAuthId
+    }).setProtectedHeader({ alg }).setExpirationTime("48h").sign(secret);
     return {
       statusCode: 200,
       headers: {
@@ -2843,7 +3714,7 @@ var handler = async (event, context) => {
         "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
         "Access-Control-Max-Age": "86400"
       },
-      body: JSON.stringify({ success: true, data: { user } })
+      body: JSON.stringify({ success: true, data: { userId, authToken: jwt } })
     };
   } catch (error) {
     console.log("error while adding user", error);

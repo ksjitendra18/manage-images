@@ -1,7 +1,9 @@
-Through this project I am learning Vue.
+Through this project I am learning Vue. I will highly appreaciate any feedbacks.
 
-I will highly appreaciate any feedbacks.
+Through this project users can upload the image to their BunnyCdn account and can get the link copied of the uploaded images.
 
-Through this project users can upload the image to their BunnyCdn account and can get the link copied of the uploaded images
-
-Also I will try to implement a functions route that will compress the image then upload.
+# Tech Stack
+UI: Vue.js, TailwindCSS, DaisyUI
+Backend: Netlify Functions
+Hosting: Netlify
+ORM: Drizzle

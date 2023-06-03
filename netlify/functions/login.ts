@@ -41,8 +41,11 @@ const handler: Handler = async (event: HandlerEvent) => {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET)
     const alg = 'HS256'
 
+    const userId = existingUser[0].userId
+
+    // uid: existingUser[0].userId,
     const jwt = await new jose.SignJWT({
-      uid: existingUser[0].userId,
+      uid: userId,
       uauth: existingUser[0].userAuthId
     })
       .setProtectedHeader({ alg })
@@ -54,17 +57,15 @@ const handler: Handler = async (event: HandlerEvent) => {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET,HEAD,POST,OPTIONS',
-        'Access-Control-Max-Age': '86400',
-        'auth-token': jwt
+        'Access-Control-Max-Age': '86400'
       },
-      body: JSON.stringify({ success: true, data: { authToken: jwt } })
+      body: JSON.stringify({ success: true, data: { userId: userId, authToken: jwt } })
     }
   } catch (error) {
     console.log('error while adding user', error)
     return {
       statusCode: 500,
       headers: {
-        'Access-Control-Expose-Headers': '*',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET,HEAD,POST,OPTIONS',
         'Access-Control-Max-Age': '86400'

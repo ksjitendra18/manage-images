@@ -63,7 +63,7 @@ const handler: Handler = async (event: HandlerEvent) => {
         'Access-Control-Allow-Methods': 'GET,HEAD,POST,OPTIONS',
         'Access-Control-Max-Age': '86400'
       },
-      body: JSON.stringify({ success: true, data: { authToken: jwt } })
+      body: JSON.stringify({ success: true, data: { userId: userId, authToken: jwt } })
     }
   } catch (error) {
     console.log('error while adding user', error)
