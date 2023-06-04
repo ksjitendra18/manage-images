@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import Cookies from 'js-cookie'
 import URL from '@/utils/url'
 

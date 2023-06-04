@@ -90,8 +90,10 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach((to, from) => {
-  document.title = to.meta?.title ?? 'Manage Images'
+router.beforeEach((to) => {
+  // document.title = to.meta?.title ?? 'Manage Images'
+  const title = to.meta?.title
+  document.title = typeof title === 'string' ? title : 'Manage Images'
 })
 
 export default router
