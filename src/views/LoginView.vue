@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import Cookies from 'js-cookie'
 import URL from '@/utils/url'
 
@@ -10,12 +10,15 @@ import { useUserStore } from '@/stores/user'
 import router from '@/router'
 const store = useUserStore()
 
+const isError = ref(false)
+const isServerError = ref(false)
 const isLoading = ref(false)
 
 const handleSubmit = async (event: Event) => {
   event.preventDefault()
   isLoading.value = true
-
+  isError.value = false
+  isServerError.value = false
   try {
     const res = await fetch(`${URL}/.netlify/functions/login`, {
       method: 'POST',
@@ -34,8 +37,7 @@ const handleSubmit = async (event: Event) => {
 
     router.push('/images')
   } catch (error) {
-    console.log('error while login')
-    throw new Error('Error. Please try again')
+    isError.value = true
   } finally {
     isLoading.value = false
   }
@@ -57,7 +59,10 @@ const handleSubmit = async (event: Event) => {
             id="email"
             type="text"
             placeholder="name@email.com"
-            class="input input-bordered w-full max-w-md"
+            :class="{
+              'border-red-600 focus-visible:outline-red-600 focus-visible:border-none': isError
+            }"
+            class="bg-transparent input input-bordered w-full max-w-md"
             required
           />
         </div>
@@ -71,14 +76,20 @@ const handleSubmit = async (event: Event) => {
             id="password"
             type="password"
             placeholder="6+ characters"
+            :class="{
+              'border-red-600 focus-visible:outline-red-600 focus-visible:border-none': isError
+            }"
             class="input input-bordered w-full max-w-md"
             required
           />
         </div>
 
+        <div v-show="isError" class="bg-red-600 text-white px-3 py-1 rounded-md">
+          Please check email and password
+        </div>
+
         <button class="mt-5 btn btn-primary rounded-full">
           <span v-if="isLoading" class="loading loading-spinner"></span>
-
           Login
         </button>
 

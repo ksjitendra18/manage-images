@@ -8,6 +8,48 @@
       "when": 1685707745513,
       "tag": "0000_previous_king_cobra",
       "breakpoints": false
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1685849254923,
+      "tag": "0001_illegal_big_bertha",
+      "breakpoints": false
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1685849306445,
+      "tag": "0002_soft_nuke",
+      "breakpoints": false
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1685849612636,
+      "tag": "0003_handy_luckman",
+      "breakpoints": false
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1685874600795,
+      "tag": "0004_majestic_blink",
+      "breakpoints": false
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1685876313806,
+      "tag": "0005_marvelous_scream",
+      "breakpoints": false
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1685881821200,
+      "tag": "0006_square_unus",
+      "breakpoints": false
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `userapiendpoints` ADD `endpointId` varchar(64) NOT NULL;

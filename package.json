@@ -11,7 +11,7 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write src/",
     "db-push": "drizzle-kit push:mysql",
-    "migrate": "drizzle-kit generate:mysql"
+    "db-migrate": "drizzle-kit generate:mysql"
   },
   "dependencies": {
     "@fontsource-variable/jost": "^5.0.3",
@@ -21,6 +21,7 @@
     "drizzle-orm": "^0.26.5",
     "jose": "^4.14.4",
     "js-cookie": "^3.0.5",
+    "lucide-vue-next": "^0.233.0",
     "nanoid": "^4.0.2",
     "pinia": "^2.0.36",
     "vue": "^3.3.2",

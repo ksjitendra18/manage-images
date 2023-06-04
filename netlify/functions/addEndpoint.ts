@@ -1,27 +1,23 @@
 import type { Handler, HandlerEvent } from '@netlify/functions'
+
 import { and, eq } from 'drizzle-orm'
 import * as jose from 'jose'
 import { db } from '../db/db'
-import { users } from '../db/schema'
+import { userApiEndpoints, users } from '../db/schema'
+import { customAlphabet } from 'nanoid'
+const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 10)
 
 const handler: Handler = async (event: HandlerEvent) => {
-  const { authToken }: { authToken: string } = JSON.parse(event.body!)
+  const {
+    apiKey,
+    folderName,
+    storageName,
+    authToken
+  }: { apiKey: string; folderName: string; storageName: string; authToken: string } = JSON.parse(
+    event.body!
+  )
 
   try {
-    if (authToken === undefined) {
-      return {
-        statusCode: 200,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET,HEAD,POST,OPTIONS',
-          'Access-Control-Max-Age': '86400'
-        },
-        body: JSON.stringify({
-          success: true,
-          data: { message: 'Please Login', userId: null, isAuth: false }
-        })
-      }
-    }
     const secret = new TextEncoder().encode(process.env.JWT_SECRET)
 
     const { payload } = await jose.jwtVerify(authToken, secret)
@@ -50,6 +46,17 @@ const handler: Handler = async (event: HandlerEvent) => {
 
     const { userId } = userExists[0]
 
+    const endpointId = nanoid()
+
+    await db.insert(userApiEndpoints).values({
+      apiKey: apiKey,
+      endpointId: endpointId,
+      provider: 'bunnycdn',
+      folderName: folderName,
+      storageName: storageName,
+      userId: userId
+    })
+
     return {
       statusCode: 200,
       headers: {
@@ -57,10 +64,13 @@ const handler: Handler = async (event: HandlerEvent) => {
         'Access-Control-Allow-Methods': 'GET,HEAD,POST,OPTIONS',
         'Access-Control-Max-Age': '86400'
       },
-      body: JSON.stringify({ success: true, data: { userId: userId, isAuth: true } })
+      body: JSON.stringify({
+        success: true,
+        data: { message: 'Endpoint added successfully', endpointId: endpointId }
+      })
     }
   } catch (error) {
-    console.log('error while checking auth', error)
+    console.log('error while adding user', error)
     return {
       statusCode: 500,
       headers: {
@@ -68,10 +78,7 @@ const handler: Handler = async (event: HandlerEvent) => {
         'Access-Control-Allow-Methods': 'GET,HEAD,POST,OPTIONS',
         'Access-Control-Max-Age': '86400'
       },
-      body: JSON.stringify({
-        success: false,
-        data: { message: 'Error while logging in', userId: null }
-      })
+      body: JSON.stringify({ success: false, data: { message: 'Error while adding endpoint' } })
     }
   }
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `userapikeys` ADD `provider` varchar(64);

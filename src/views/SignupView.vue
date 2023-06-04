@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import router from '@/router'
+import { useUserStore } from '@/stores/user'
 import Cookies from 'js-cookie'
 import { ref } from 'vue'
 
+const store = useUserStore()
 const nameInput = ref('')
 const emailInput = ref('')
 const passwordInput = ref('')
 
 const isLoading = ref(false)
+const isError = ref(false)
+// const isServerError = ref(false)
 
 const handleSubmit = async (event: Event) => {
   event.preventDefault()
@@ -25,7 +29,13 @@ const handleSubmit = async (event: Event) => {
 
     const resData = await res.json()
 
+    if (res.status === 400 || resData.success === false) {
+      isError.value = true
+      return
+    }
+
     const token = resData.data.authToken
+    store.setUser(resData.data.userId)
 
     Cookies.set('auth-token', token!, {
       expires: 2,
@@ -34,8 +44,8 @@ const handleSubmit = async (event: Event) => {
 
     router.push('/images')
   } catch (error) {
-    console.log('error while login')
-    throw new Error('Error. Please try again')
+    isError.value = true
+    console.log('error while signup', error)
   } finally {
     isLoading.value = false
   }
@@ -70,6 +80,9 @@ const handleSubmit = async (event: Event) => {
             id="email"
             type="text"
             placeholder="name@email.com"
+            :class="{
+              'border-red-600 focus-visible:outline-red-600 focus-visible:border-none': isError
+            }"
             class="input input-bordered w-full max-w-md"
           />
         </div>
@@ -82,9 +95,16 @@ const handleSubmit = async (event: Event) => {
             name="password"
             id="password"
             type="password"
+            :class="{
+              'border-red-600 focus-visible:outline-red-600 focus-visible:border-none': isError
+            }"
             placeholder="6+ characters"
             class="input input-bordered w-full max-w-md"
           />
+        </div>
+
+        <div v-show="isError" class="bg-red-600 text-white px-3 py-1 rounded-md">
+          Please check email and password
         </div>
 
         <button class="mt-5 btn btn-primary rounded-full">

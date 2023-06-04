@@ -3766,22 +3766,25 @@ function varchar(name2, config) {
 // netlify/db/schema.ts
 var users = mysqlTable("users", {
   id: serial("id").primaryKey(),
-  userId: varchar("userId", { length: 256 }),
-  userAuthId: varchar("userAuthId", { length: 256 }),
-  name: varchar("name", { length: 256 }),
-  email: varchar("email", { length: 256 }),
-  password: varchar("password", { length: 256 })
+  userId: varchar("userId", { length: 256 }).notNull(),
+  userAuthId: varchar("userAuthId", { length: 256 }).notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  email: varchar("email", { length: 256 }).notNull(),
+  password: varchar("password", { length: 256 }).notNull()
 });
-var userApiKeys = mysqlTable("userapikeys", {
+var userApiEndpoints = mysqlTable("userapiendpoints", {
   id: serial("id").primaryKey(),
-  key: varchar("name", { length: 256 }),
-  userId: varchar("userId", { length: 256 })
+  endpointId: varchar("endpointId", { length: 64 }).notNull(),
+  provider: varchar("provider", { length: 64 }).notNull(),
+  apiKey: varchar("name", { length: 256 }).notNull(),
+  userId: varchar("userId", { length: 256 }).notNull(),
+  folderName: varchar("folderName", { length: 256 }).notNull(),
+  storageName: varchar("storageName", { length: 256 }).notNull()
 });
 
 // netlify/functions/status.ts
 var handler = async (event) => {
   const { authToken } = JSON.parse(event.body);
-  console.log("auth", authToken, authToken === void 0);
   try {
     if (authToken === void 0) {
       return {
@@ -3800,8 +3803,21 @@ var handler = async (event) => {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
     const { payload } = await jwtVerify(authToken, secret);
     const userExists = await db.select({ userId: users.userId }).from(users).where(and(eq(users.userId, payload.uid), eq(users.userAuthId, payload.uauth)));
+    if (userExists.length < 1) {
+      return {
+        statusCode: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
+          "Access-Control-Max-Age": "86400"
+        },
+        body: JSON.stringify({
+          success: true,
+          data: { message: "Please Login", userId: null, isAuth: false }
+        })
+      };
+    }
     const { userId } = userExists[0];
-    console.log("userid", userId, userExists);
     return {
       statusCode: 200,
       headers: {
@@ -3809,7 +3825,7 @@ var handler = async (event) => {
         "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
         "Access-Control-Max-Age": "86400"
       },
-      body: JSON.stringify({ userExists, message: "auth status endpoint" })
+      body: JSON.stringify({ success: true, data: { userId, isAuth: true } })
     };
   } catch (error) {
     console.log("error while checking auth", error);
@@ -3820,7 +3836,10 @@ var handler = async (event) => {
         "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
         "Access-Control-Max-Age": "86400"
       },
-      body: JSON.stringify({ success: false, data: null })
+      body: JSON.stringify({
+        success: false,
+        data: { message: "Error while logging in", userId: null }
+      })
     };
   }
 };

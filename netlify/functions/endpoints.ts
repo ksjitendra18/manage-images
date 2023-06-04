@@ -2,7 +2,7 @@ import type { Handler, HandlerEvent } from '@netlify/functions'
 import { and, eq } from 'drizzle-orm'
 import * as jose from 'jose'
 import { db } from '../db/db'
-import { users } from '../db/schema'
+import { userApiEndpoints, users } from '../db/schema'
 
 const handler: Handler = async (event: HandlerEvent) => {
   const { authToken }: { authToken: string } = JSON.parse(event.body!)
@@ -50,6 +50,11 @@ const handler: Handler = async (event: HandlerEvent) => {
 
     const { userId } = userExists[0]
 
+    const endPoints = await db
+      .select()
+      .from(userApiEndpoints)
+      .where(eq(userApiEndpoints.userId, userId))
+
     return {
       statusCode: 200,
       headers: {
@@ -57,7 +62,7 @@ const handler: Handler = async (event: HandlerEvent) => {
         'Access-Control-Allow-Methods': 'GET,HEAD,POST,OPTIONS',
         'Access-Control-Max-Age': '86400'
       },
-      body: JSON.stringify({ success: true, data: { userId: userId, isAuth: true } })
+      body: JSON.stringify({ success: true, data: { endPoints: endPoints } })
     }
   } catch (error) {
     console.log('error while checking auth', error)

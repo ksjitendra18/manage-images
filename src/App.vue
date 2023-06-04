@@ -1,29 +1,35 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 
+import Cookies from 'js-cookie'
+import { onMounted } from 'vue'
 import { useUserStore } from './stores/user'
 import URL from './utils/url'
-import { onMounted } from 'vue'
-import Cookies from 'js-cookie'
+import checkAuth from './utils/checkAuth'
 
 const store = useUserStore()
 
 const fetchAuthStatus = async () => {
-  const authToken = Cookies.get('auth-token')
-  const res = await fetch(`${URL}/.netlify/functions/status`, {
-    method: 'POST',
-    body: JSON.stringify({ authToken: authToken })
-  })
-  const resData = await res.json()
+  // const authToken = Cookies.get('auth-token')
+  // const res = await fetch(`${URL}/.netlify/functions/status`, {
+  //   method: 'POST',
+  //   body: JSON.stringify({ authToken: authToken })
+  // })
+  // const resData = await res.json()
+  const resData = await checkAuth()
 
-  console.log('auth stats', resData)
+  if (resData.data.userId === null) return
+  store.setUser(resData.data.userId)
 }
 
 onMounted(() => {
   fetchAuthStatus()
 })
 
-console.log('store', store.userId)
+const handleLogout = () => {
+  Cookies.remove('auth-token')
+  store.userId = ''
+}
 </script>
 
 <template>
@@ -41,7 +47,7 @@ console.log('store', store.userId)
             <RouterLink to="/images">Images</RouterLink>
           </li>
           <li v-if="store.userId !== ''">
-            <button to="">Logout</button>
+            <button @click="handleLogout">Logout</button>
           </li>
           <li v-if="store.userId === ''">
             <RouterLink to="/login">Login</RouterLink>

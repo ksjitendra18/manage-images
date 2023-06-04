@@ -1,0 +1,1 @@
+RENAME TABLE `userapikeys` TO `userapiendpoints`;
