@@ -1,8 +1,0 @@
-{
-  "version": 3,
-  "sources": ["netlify/functions/upload.ts"],
-  "sourceRoot": "C:/Users/DELL/AppData/Local/Temp/tmp-20220-ifVUDUA8RHRX",
-  "sourcesContent": ["import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'\r\n\r\nconst handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {\r\n  // your server-side functionality\r\n  return {\r\n    statusCode: 200,\r\n    body: JSON.stringify({ message: 'upload endpoint' })\r\n  }\r\n}\r\n\r\nexport { handler }\r\n"],
-  "mappings": ";;;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAEA,IAAM,UAAmB,OAAO,OAAqB,YAA4B;AAE/E,SAAO;AAAA,IACL,YAAY;AAAA,IACZ,MAAM,KAAK,UAAU,EAAE,SAAS,kBAAkB,CAAC;AAAA,EACrD;AACF;",
-  "names": []
-}
