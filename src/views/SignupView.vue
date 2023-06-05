@@ -3,7 +3,7 @@ import router from '@/router'
 import { useUserStore } from '@/stores/user'
 import Cookies from 'js-cookie'
 import { ref } from 'vue'
-
+import URL from "@/utils/url"
 const store = useUserStore()
 const nameInput = ref('')
 const emailInput = ref('')
@@ -18,7 +18,7 @@ const handleSubmit = async (event: Event) => {
   isLoading.value = true
 
   try {
-    const res = await fetch('http://localhost:9999/.netlify/functions/signup', {
+    const res = await fetch(`${URL}/.netlify/functions/signup`, {
       method: 'POST',
       body: JSON.stringify({
         name: nameInput.value,
