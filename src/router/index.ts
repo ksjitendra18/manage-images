@@ -17,7 +17,7 @@ const router = createRouter({
       name: 'login',
       component: () => import('../views/LoginView.vue'),
 
-      beforeEnter: async (from, to) => {
+      beforeEnter: async () => {
         const authStatus = await checkAuth()
         if (authStatus.data.userId !== null && authStatus.data.isAuth !== false) {
           return { name: 'home' }
@@ -31,7 +31,7 @@ const router = createRouter({
       path: '/signup',
       name: 'signup',
       component: () => import('../views/SignupView.vue'),
-      beforeEnter: async (from, to) => {
+      beforeEnter: async () => {
         const authStatus = await checkAuth()
 
         if (authStatus.data.userId !== null && authStatus.data.isAuth !== false) {
@@ -46,7 +46,7 @@ const router = createRouter({
       path: '/images',
       name: 'images',
       component: () => import('../views/ImageView.vue'),
-      beforeEnter: async (from, to) => {
+      beforeEnter: async () => {
         const authStatus = await checkAuth()
 
         if (authStatus.data.userId === null && authStatus.data.isAuth === false) {
@@ -61,7 +61,7 @@ const router = createRouter({
       path: '/images/add-endpoint',
       name: 'imagesAddEndpoint',
       component: () => import('../views/AddEndpoint.vue'),
-      beforeEnter: async (from, to) => {
+      beforeEnter: async () => {
         const authStatus = await checkAuth()
 
         if (authStatus.data.userId === null && authStatus.data.isAuth === false) {
@@ -76,7 +76,7 @@ const router = createRouter({
       path: '/images/:endpointId/:storageName/:folderName',
       name: 'imagesEndpoint',
       component: () => import('../views/ImageEndpoint.vue'),
-      beforeEnter: async (from, to) => {
+      beforeEnter: async () => {
         const authStatus = await checkAuth()
 
         if (authStatus.data.userId === null && authStatus.data.isAuth === false) {
@@ -85,6 +85,29 @@ const router = createRouter({
       },
       meta: {
         title: 'Images'
+      }
+    },
+    {
+      path: '/images/upload',
+      name: 'uploadImage',
+      component: () => import('../views/UploadView.vue'),
+      beforeEnter: async () => {
+        const authStatus = await checkAuth()
+
+        if (authStatus.data.userId === null && authStatus.data.isAuth === false) {
+          return { path: '/login' }
+        }
+      },
+      meta: {
+        title: 'Upload Image'
+      }
+    },
+    {
+      path: '/images/compress',
+      name: 'compressImage',
+      component: () => import('../views/CompressView.vue'),
+      meta: {
+        title: 'Compress Image'
       }
     }
   ]

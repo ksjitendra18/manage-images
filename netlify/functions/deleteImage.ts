@@ -2,8 +2,8 @@ import type { Handler, HandlerEvent } from '@netlify/functions'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/db'
 import { userApiEndpoints } from '../db/schema'
-
-const URL = process.env.ENV_INFO === 'dev' ? 'http://localhost:9999' : ''
+import URL from '../../src/utils/url'
+// const URL = process.env.ENV_INFO === 'dev' ? URL : ''
 
 const handler: Handler = async (event: HandlerEvent) => {
   const {

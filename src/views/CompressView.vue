@@ -1,0 +1,1 @@
+<template>compress image</template>
