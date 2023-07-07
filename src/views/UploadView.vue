@@ -67,29 +67,18 @@ function handleCancel() {
 
 async function handleUpload(event: Event) {
   event.preventDefault()
-  console.log('hit')
+
   const inputElement = event.target as HTMLInputElement
-  console.log('hit 2')
+
   try {
-    console.log('hit 3')
-    // if (!inputElement.files) return
-
-    console.log('hit 4')
-    // const file = inputElement.files[0]
-
-    console.log('hit 5')
-
-    const formData = new FormData()
-    formData.append('image', fileRef.value)
-
-    const response = await fetch(`${URL}/.netlify/functions/compress`, {
-      method: 'POST',
-      body: formData
-    })
-
-    const resData = await response.json()
-
-    console.log('resData is', resData)
+    // const formData = new FormData()
+    // formData.append('image', fileRef.value)
+    // const response = await fetch(`${URL}/.netlify/functions/compress`, {
+    //   method: 'POST',
+    //   body: formData
+    // })
+    // const resData = await response.json()
+    // console.log('resData is', resData)
   } catch (error) {
     console.log('error while uploding', error)
   }
